@@ -1,0 +1,26 @@
+name: inventory_flutter
+description: 个人物品库存清单 - Flutter 跨平台客户端 (V1.0)
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: ^5.4.0                 # 通用网络请求封装（对接后端 REST）
+  provider: ^6.1.0            # 轻量状态管理（Task 4 详述）
+  shared_preferences: ^2.2.0  # Token / 本地存储
+  intl: ^0.19.0               # 日期格式化（生产日期、过期日）
+  flutter_easyloading: ^3.0.0 # 轻量 loading / toast（可选）
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

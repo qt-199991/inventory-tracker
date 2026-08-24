@@ -1,0 +1,6 @@
+# 不进仓库的文件
+backend/node/data/
+backend/node/.jwtsecret
+node_modules/
+*.log
+.DS_Store

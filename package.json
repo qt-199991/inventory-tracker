@@ -1,0 +1,19 @@
+{
+  "name": "inventory-tracker",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "个人物品库存清单与到期提醒 App（PWA + Capacitor 安卓）",
+  "scripts": {
+    "test": "node --test",
+    "build:www": "node scripts/build-www.mjs",
+    "android:add": "cap add android",
+    "android:sync": "npm run build:www && cap copy android",
+    "android:open": "cap open android"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/android": "^6.1.2"
+  }
+}

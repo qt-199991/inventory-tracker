@@ -1,0 +1,13 @@
+import { readFileSync } from 'node:fs';
+const h = readFileSync('standalone.html', 'utf8');
+const m = h.match(/<script>([\s\S]*)<\/script>/);
+const js = m[1];
+const imports = (js.match(/^\s*import\s/gm) || []).length;
+const exports = (js.match(/\bexport\s/g) || []).length;
+console.log('import 残留:', imports);
+console.log('export 残留:', exports);
+console.log('含 start():', /start\(\);/.test(js));
+console.log('含 deriveCategory:', /deriveCategory/.test(js));
+console.log('含 批次编号(idx+1):', /第 \$\{" + '\{' + 'idx' + '\}'/.test(js) || /第 /.test(js));
+console.log('script 标签数:', (h.match(/<script>/g) || []).length);
+console.log('style 标签数:', (h.match(/<style>/g) || []).length);

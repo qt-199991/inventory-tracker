@@ -1,0 +1,8 @@
+{
+  "appId": "com.tianq.inventory",
+  "appName": "库存清单",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

@@ -1,0 +1,2726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#2e7d32" />
+  <title>物品库存清单</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <style>
+:root {
+  --green: #2e7d32;
+  --green-d: #1b5e20;
+  --green-l: #e8f5e9;
+  --bg: #f4f6f8;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --muted: #6b7280;
+  --red: #ef4444;
+  --red-bg: #fef2f2;
+  --orange: #f59e0b;
+  --orange-bg: #fffbeb;
+  --yellow: #eab308;
+  --yellow-bg: #fefce8;
+  --blue: #3b82f6;
+  --blue-bg: #eff6ff;
+  --line: #e5e7eb;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  padding-bottom: 32px;
+}
+
+/* 顶部栏 */
+.app-header {
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.brand-icon { font-size: 20px; }
+.search {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+}
+.search:focus { border-color: var(--green); background: #fff; }
+.add-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.3);
+}
+.add-icon { font-size: 18px; line-height: 1; }
+
+/* 主容器 */
+.container { max-width: 720px; margin: 0 auto; padding: 16px; }
+
+/* 统计卡 */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.15s;
+  box-shadow: var(--shadow);
+}
+.stat-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.stat-card.active { border-color: var(--blue); background: var(--blue-bg); }
+.stat-card b {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+.stat-card span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.stat-card[data-status="expired"] b { color: var(--red); }
+.stat-card[data-status="expiring"] b { color: var(--orange); }
+.stat-card[data-status="low"] b { color: var(--blue); }
+
+/* 筛选栏 */
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.filter-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 14px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 30px;
+}
+.filter-field select:focus { border-color: var(--green); outline: none; }
+
+/* 列表分组 */
+.group { margin-bottom: 16px; }
+.group-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 2px 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.group-count {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* 批次卡片 */
+.batch {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--green);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+}
+.batch.expired { border-left-color: var(--red); background: var(--red-bg); }
+.batch.expiring { border-left-color: var(--orange); background: var(--orange-bg); }
+.batch.ok { border-left-color: var(--green); }
+.batch.low { border-left-color: var(--blue); background: var(--blue-bg); }
+.batch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.batch-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.batch-title {
+  font-weight: 700;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 600;
+}
+.badge.expired { background: var(--red); }
+.badge.expiring { background: var(--orange); }
+.badge.ok { background: var(--green); }
+.badge.low { background: var(--blue); }
+.batch-qty {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+.batch-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.batch-body span { display: inline-flex; align-items: center; gap: 4px; }
+.batch-note {
+  flex-basis: 100%;
+  color: var(--muted);
+}
+.batch-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.mini {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text);
+}
+.mini.danger { color: var(--red); border-color: #fecaca; }
+.mini.use { color: var(--green-d); border-color: #c8e6c9; background: var(--green-l); font-weight: 600; }
+.mini:hover { background: #f9fafb; }
+.mini.use:hover { background: #dcedc8; }
+
+/* 看板 */
+.dashboard { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.zone {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+.zone h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+.zone ul { margin: 0; padding: 0; list-style: none; }
+.zone li { padding: 5px 0; border-top: 1px dashed rgba(0,0,0,0.06); }
+.zone li:first-child { border-top: none; }
+.z-name { font-weight: 700; }
+.z-meta { display: block; font-size: 12px; color: var(--muted); }
+.z-expired { background: var(--red-bg); border-color: #fecaca; }
+.z-expiring { background: var(--orange-bg); border-color: #fde68a; }
+.z-low { background: var(--yellow-bg); border-color: #fde68a; }
+.z-suggest { background: var(--green-l); border-color: #c8e6c9; }
+
+/* 物品分组卡片 */
+.group-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.group-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.group-title { margin: 0; font-size: 17px; font-weight: 700; }
+.group-right { flex-shrink: 0; }
+.group-stock { font-size: 15px; font-weight: 700; color: var(--text); }
+.batches { display: flex; flex-direction: column; gap: 10px; }
+
+/* 批次标签与先用提醒 */
+.batch-no {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--green-soft, #e8f5e9);
+  color: var(--green, #2e7d32);
+  font-weight: 700;
+}
+.batch-label {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: var(--muted);
+  font-weight: 500;
+}
+.use-first-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
+  font-weight: 600;
+}
+.batch-first { background: #f0fdf4; border-color: #86efac; }
+
+/* 空状态 */
+.empty-hint {
+  text-align: center;
+  color: var(--muted);
+  padding: 48px 16px;
+  font-size: 15px;
+}
+
+/* 弹层 */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal[hidden] { display: none; }
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+.modal-card {
+  position: relative;
+  background: var(--card);
+  width: 100%;
+  max-width: 720px;
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 20px 20px 0 0;
+  padding: 18px 18px 24px;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modal-head h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.icon-btn {
+  border: none;
+  background: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 4px;
+}
+
+/* 过期信息录入方式切换 */
+.expiry-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.expiry-mode .seg {
+  position: relative;
+  display: flex;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  background: #fafbfc;
+  transition: all 0.15s;
+}
+.expiry-mode .seg input { position: absolute; opacity: 0; pointer-events: none; }
+.expiry-mode .seg span { display: flex; flex-direction: column; gap: 2px; }
+.expiry-mode .seg small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.expiry-mode .seg.active {
+  border-color: var(--green);
+  background: var(--green-l);
+  color: var(--green-d);
+}
+.expiry-mode .seg.active small { color: var(--green); }
+
+/* 表单 */
+.form { display: flex; flex-direction: column; gap: 14px; }
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text);
+}
+.form .label-text { font-weight: 500; }
+.required { color: var(--red); font-style: normal; }
+.form input, .form textarea, .form select {
+  font-size: 15px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fafbfc;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+}
+.form input:focus, .form textarea:focus, .form select:focus { border-color: var(--green); background: #fff; }
+.form input::placeholder, .form textarea::placeholder { color: #9ca3af; }
+.form .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form .hint { font-size: 13px; color: var(--green); margin: -4px 0 0; }
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+.spacer { flex: 1; }
+.btn {
+  border: none;
+  border-radius: 12px;
+  padding: 11px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn.primary { background: var(--green); color: #fff; }
+.btn.ghost { background: #f3f4f6; color: var(--text); }
+.btn.danger { background: #fff; color: var(--red); border: 1px solid #fecaca; }
+
+/* 顶部用户按钮 */
+.user-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green-d);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.user-btn:hover { background: var(--green-l); }
+
+/* 登录 / 注册遮罩 */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--green-d), var(--green));
+  padding: 20px;
+}
+.auth-overlay[hidden] { display: none; }
+.auth-card {
+  background: var(--card);
+  width: 100%;
+  max-width: 380px;
+  border-radius: 20px;
+  padding: 24px 22px;
+  box-shadow: var(--shadow-lg);
+}
+.auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--green-d);
+  margin-bottom: 18px;
+}
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.auth-tab {
+  border: 1px solid var(--line);
+  background: #fafbfc;
+  border-radius: 10px;
+  padding: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+.auth-tab.active { border-color: var(--green); background: var(--green-l); color: var(--green-d); }
+.auth-msg {
+  font-size: 13px;
+  color: var(--red);
+  background: var(--red-bg);
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin: 0 0 4px;
+}
+.auth-msg.hidden, .auth-msg[hidden] { display: none; }
+.auth-hint {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  margin: 14px 0 0;
+}
+
+/* 照片上传 */
+.photo-field { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.photo-pick { padding: 9px 16px; }
+.photo-preview {
+  position: relative;
+  display: inline-flex;
+}
+.photo-preview[hidden] { display: none; }
+.photo-preview img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+.photo-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: none;
+  background: var(--red);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+/* 分组卡片缩略图（已弃用：改为每个批次显示自己的照片） */
+.group-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+/* 批次卡片缩略图：每批显示自己的照片 */
+.batch-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* 数量步进器（列表直接 +-） */
+.qty-stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.qty-stepper .mini.qty {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 600px) {
+  .modal { align-items: center; }
+  .modal-card { border-radius: 20px; max-height: 85vh; }
+}
+
+/* 顶部齿轮按钮（数据备份） */
+.icon-top-btn {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.icon-top-btn:hover { background: var(--green-l); color: var(--green-d); }
+
+/* A. 照片全屏预览 */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.lightbox[hidden] { display: none; }
+.lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  object-fit: contain;
+}
+.lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+.lightbox-close:hover { background: rgba(255, 255, 255, 0.3); }
+
+/* B. 切换账号菜单 */
+.user-menu {
+  position: fixed;
+  top: 56px;
+  right: 16px;
+  z-index: 30;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  min-width: 180px;
+  overflow: hidden;
+}
+.user-menu[hidden] { display: none; }
+.user-menu-head {
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.user-menu-list { max-height: 240px; overflow-y: auto; }
+.user-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: #fff;
+  padding: 11px 14px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+}
+.user-menu-item:hover { background: var(--bg); }
+.user-menu-item.active { color: var(--green-d); font-weight: 700; background: var(--green-l); }
+.user-menu-item.logout { color: var(--red); border-top: 1px solid var(--line); width: 100%; text-align: left; }
+.user-menu-empty { padding: 12px 14px; font-size: 13px; color: var(--muted); }
+
+/* 通用小弹窗（C1/C2/C3） */
+.mini-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 20px;
+}
+.mini-modal[hidden] { display: none; }
+.mini-modal-card {
+  background: var(--card);
+  width: 100%;
+  max-width: 420px;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.mini-modal-head { display: flex; justify-content: space-between; align-items: center; }
+.mini-modal-head h3 { margin: 0; font-size: 17px; font-weight: 700; }
+.mini-modal-card h3 { margin: 0; font-size: 16px; font-weight: 700; }
+.mini-modal-card input[type="number"] {
+  font-size: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  text-align: center;
+}
+.mini-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.mini-modal-actions.col { flex-direction: column; }
+.mini-modal-actions.col .btn { width: 100%; }
+
+/* C2. 待补货清单 */
+.toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+.tool-btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue);
+  cursor: pointer;
+}
+.tool-btn:hover { background: var(--blue-bg); }
+.restock-list { margin: 0; padding: 0; list-style: none; max-height: 320px; overflow-y: auto; }
+.restock-list li { padding: 9px 2px; border-top: 1px dashed rgba(0, 0, 0, 0.08); font-size: 14px; }
+.restock-list li:first-child { border-top: none; }
+.restock-empty { color: var(--muted); text-align: center; padding: 20px 0; }
+
+/* ============ 整体美化（V1.2） ============ */
+
+/* 顶部栏改为绿色渐变，更醒目 */
+.app-header {
+  background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+  border-bottom: none;
+  box-shadow: 0 2px 12px rgba(46, 125, 50, 0.25);
+  color: #fff;
+}
+.app-header .brand { color: #fff; }
+.app-header .search {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: transparent;
+  color: var(--text);
+}
+.app-header .search:focus { background: #fff; }
+.app-header .add-btn {
+  background: #fff;
+  color: var(--green-d);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.app-header .user-btn {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* 统计卡美化：彩色数字 + 悬停浮起 */
+.stat-card b { font-size: 26px; letter-spacing: -0.5px; }
+.stat-card[data-status="expired"] { background: var(--red-bg); border-color: #fecaca; }
+.stat-card[data-status="expiring"] { background: var(--orange-bg); border-color: #fde68a; }
+.stat-card[data-status="low"] { background: var(--blue-bg); border-color: #bfdbfe; }
+
+/* 空状态插画 */
+.empty-hint {
+  text-align: center;
+  color: var(--muted);
+  padding: 52px 20px;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.empty-hint::before {
+  content: "📦";
+  display: block;
+  font-size: 60px;
+  margin-bottom: 14px;
+}
+
+/* 分组卡片：更柔和的视觉分隔 */
+.group-card {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 12px 12px 4px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+}
+.group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px 10px;
+  border-bottom: 1px dashed var(--line);
+  margin-bottom: 10px;
+}
+
+/* 批次卡片圆角与阴影加强 */
+.batch { border-radius: 14px; padding: 13px 14px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05); }
+.batch-no { font-size: 12px; color: var(--muted); background: var(--bg); padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+.batch-qty { font-size: 15px; font-weight: 700; color: var(--text); }
+.use-first-badge {
+  font-size: 11px; font-weight: 700; color: var(--green-d);
+  background: var(--green-l); padding: 2px 8px; border-radius: 999px;
+}
+
+/* ============ 分类快捷筛选条 ============ */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.chip:hover { border-color: var(--green); color: var(--green-d); }
+.chip.active {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.25);
+}
+
+/* ============ D. 回收站 ============ */
+.trash-list {
+  list-style: none; margin: 0; padding: 0;
+  max-height: 52vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.trash-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card);
+}
+.trash-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.trash-name { font-weight: 600; font-size: 14px; }
+.trash-meta { font-size: 12px; color: var(--muted); }
+.trash-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.trash-empty { text-align: center; color: var(--muted); padding: 28px 0; }
+
+/* ============ E. 消耗趋势统计 ============ */
+.mini-modal-card.wide { max-width: 520px; }
+.stats-chart {
+  display: flex; align-items: flex-end; gap: 3px;
+  height: 168px; padding: 8px 0; overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+}
+.bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; min-width: 9px; }
+.bar {
+  width: 100%; max-width: 18px; min-height: 2px;
+  background: linear-gradient(180deg, #66bb6a, #2e7d32);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+}
+.bar.empty { background: var(--line); }
+.bar-day { font-size: 9px; color: var(--muted); }
+
+/* 通用弹窗更圆润 */
+.mini-modal-card { border-radius: 20px; }
+
+</style>
+</head>
+<body>
+  <!-- 登录 / 注册 遮罩 -->
+  <div id="auth" class="auth-overlay" hidden>
+    <div class="auth-card">
+      <div class="auth-brand"><span>📦</span> 库存清单</div>
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-tab="login">登录</button>
+        <button type="button" class="auth-tab" data-tab="register">注册</button>
+      </div>
+      <form id="authForm" class="form">
+        <label class="full">
+          <span class="label-text">用户名</span>
+          <input id="authUsername" type="text" autocomplete="username" placeholder="如：妈妈 / 小明" />
+        </label>
+        <label class="full">
+          <span class="label-text">密码</span>
+          <input id="authPassword" type="password" autocomplete="current-password" placeholder="至少 4 位" />
+        </label>
+        <label class="full" id="authConfirmWrap" hidden>
+          <span class="label-text">确认密码</span>
+          <input id="authConfirm" type="password" autocomplete="new-password" placeholder="再输一次" />
+        </label>
+        <p id="authMsg" class="auth-msg" hidden></p>
+        <button type="submit" id="authSubmit" class="btn primary">登录</button>
+      </form>
+      <p class="auth-hint">数据只存在本机浏览器，不同账号的库存互相不可见。</p>
+    </div>
+  </div>
+
+  <header class="app-header">
+    <div class="top-bar">
+      <div class="brand">
+        <span class="brand-icon">📦</span>
+        <span class="brand-text">库存清单</span>
+      </div>
+      <input id="searchInput" class="search" type="search" placeholder="搜索物品…" />
+      <button id="bellBtn" class="icon-top-btn" hidden title="提醒" aria-label="提醒">🔔</button>
+      <button id="statsBtn" class="icon-top-btn" hidden title="消耗统计" aria-label="统计">📊</button>
+      <button id="trashBtn" class="icon-top-btn" hidden title="回收站" aria-label="回收站">🗑</button>
+      <button id="dataBtn" class="icon-top-btn" hidden title="数据备份与恢复" aria-label="数据">⚙</button>
+      <button id="userBtn" class="user-btn" hidden aria-label="当前账号">👤 用户</button>
+      <button id="addBtn" class="add-btn" aria-label="添加物品">
+        <span class="add-icon">+</span>
+        <span>添加</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 统计卡 -->
+    <section class="stats-row" aria-label="库存统计">
+      <button class="stat-card active" data-status="all">
+        <b id="stat-total">0</b>
+        <span>全部物品</span>
+      </button>
+      <button class="stat-card" data-status="expiring">
+        <b id="stat-expiring">0</b>
+        <span>即将过期</span>
+      </button>
+      <button class="stat-card" data-status="expired">
+        <b id="stat-expired">0</b>
+        <span>已过期</span>
+      </button>
+      <button class="stat-card" data-status="low">
+        <b id="stat-low">0</b>
+        <span>低库存</span>
+      </button>
+    </section>
+
+    <!-- 工具条 -->
+    <div class="toolbar">
+      <div id="categoryChips" class="chips" aria-label="分类快捷筛选"></div>
+      <button id="restockBtn" class="tool-btn" hidden>🛒 待补货清单</button>
+    </div>
+
+    <!-- 看板 -->
+    <section id="dashboard" class="dashboard" aria-label="到期与库存提醒"></section>
+
+    <!-- 筛选 -->
+    <section class="filter-row" aria-label="筛选与排序">
+      <div class="filter-field">
+        <select id="categoryFilter">
+          <option value="all">全部分类</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <select id="locationFilter">
+          <option value="all">全部位置</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <select id="sortFilter">
+          <option value="updated">最近更新</option>
+          <option value="created">最近添加</option>
+          <option value="expiry">过期日期最近</option>
+          <option value="quantity">库存最少</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- 列表 -->
+    <section id="list" class="list" aria-label="物品列表"></section>
+    <p id="emptyHint" class="empty-hint" hidden>
+      还没有物品，点击右上角「+ 添加」开始记录吧 ✨
+    </p>
+  </main>
+
+  <!-- 新增/编辑 表单弹层 -->
+  <div id="modal" class="modal" hidden>
+    <div id="modalBackdrop" class="modal-backdrop"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="modalTitle">添加物品</h2>
+        <button id="modalClose" class="icon-btn" aria-label="关闭">✕</button>
+      </div>
+      <form id="itemForm" class="form">
+        <input type="hidden" id="itemId" />
+
+        <label class="full">
+          <span class="label-text">物品名称 <em class="required">*</em></span>
+          <input id="f_name" type="text" required placeholder="如：洗衣液、牛奶、感冒药" />
+        </label>
+
+        <div class="row">
+          <label>
+            <span class="label-text">分类<small>（仅用于筛选）</small></span>
+            <input id="f_category" type="text" list="catList" placeholder="如：食品" />
+            <datalist id="catList">
+              <option value="食品"></option>
+              <option value="药品"></option>
+              <option value="日用品"></option>
+              <option value="化妆品"></option>
+              <option value="其他"></option>
+            </datalist>
+          </label>
+          <label>
+            <span class="label-text">存放位置 <em class="required">*</em></span>
+            <input id="f_location" type="text" required placeholder="如：阳台柜" />
+          </label>
+        </div>
+
+        <div class="row">
+          <label>
+            <span class="label-text">数量</span>
+            <input id="f_quantity" type="number" min="0" step="0.5" placeholder="1" />
+          </label>
+          <label>
+            <span class="label-text">单位</span>
+            <input id="f_unit" type="text" placeholder="件 / 瓶 / 盒" value="个" />
+          </label>
+        </div>
+
+        <!-- 过期信息：两种录入方式，默认按「生产日期＋保质期」自动算 -->
+        <div class="expiry-mode" role="radiogroup" aria-label="过期信息录入方式">
+          <label class="seg active" data-mode="auto">
+            <input type="radio" name="expiryMode" value="auto" checked />
+            <span>生产日期＋保质期<small>自动算过期日</small></span>
+          </label>
+          <label class="seg" data-mode="manual">
+            <input type="radio" name="expiryMode" value="manual" />
+            <span>直接填过期日期</span>
+          </label>
+        </div>
+
+        <div class="row" id="expiryAutoFields">
+          <label>
+            <span class="label-text">生产日期</span>
+            <input id="f_productionDate" type="date" />
+          </label>
+          <label>
+            <span class="label-text">保质期（天）</span>
+            <input id="f_shelfLifeDays" type="number" min="0" placeholder="如：牛奶 180" />
+          </label>
+        </div>
+        <p class="hint" id="computedHint">填写生产日期与保质期后，过期日会自动算出并保存，你不用自己算。</p>
+
+        <label class="full" id="expiryManualField" hidden>
+          <span class="label-text">过期日期</span>
+          <input id="f_expiryDate" type="date" />
+        </label>
+
+        <label class="full">
+          <span class="label-text">临期提醒天数 <small>（不填默认 7 天）</small></span>
+          <input id="f_expiringSoonDays" type="number" min="0" placeholder="如：牛奶设 5 天、面包设 3 天" />
+        </label>
+
+        <label class="full">
+          <span class="label-text">低库存提醒阈值 <small>（默认 3）</small></span>
+          <input id="f_lowStockThreshold" type="number" min="0" placeholder="如：3" value="3" />
+        </label>
+
+        <label class="full">
+          <span class="label-text">批次标签</span>
+          <input id="f_batchLabel" type="text" placeholder="如：旧批、新批，用来区分同物品不同批次" />
+        </label>
+
+        <label class="full">
+          <span class="label-text">备注</span>
+          <textarea id="f_note" rows="2" placeholder="如：买一送一，开封后放冰箱"></textarea>
+        </label>
+
+        <label class="full">
+          <span class="label-text">物品照片</span>
+          <div class="photo-field">
+            <input id="f_photo" type="file" accept="image/*" capture="environment" hidden />
+            <button type="button" id="photoPickBtn" class="btn ghost photo-pick">📷 选择照片</button>
+            <div id="photoPreview" class="photo-preview" hidden>
+              <img id="photoImg" alt="物品照片预览" />
+              <button type="button" id="photoRemoveBtn" class="photo-remove">✕ 移除</button>
+            </div>
+          </div>
+        </label>
+
+        <div class="form-actions">
+          <button type="button" id="deleteBtn" class="btn danger" hidden>删除</button>
+          <span class="spacer"></span>
+          <button type="button" id="cancelBtn" class="btn ghost">取消</button>
+          <button type="submit" class="btn primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- A. 照片全屏预览 -->
+  <div id="lightbox" class="lightbox" hidden>
+    <button id="lightboxClose" class="lightbox-close" aria-label="关闭">✕</button>
+    <img id="lightboxImg" alt="物品照片大图" />
+  </div>
+
+  <!-- B. 切换账号菜单 -->
+  <div id="userMenu" class="user-menu" hidden>
+    <div class="user-menu-head">切换账号</div>
+    <div id="userMenuList" class="user-menu-list"></div>
+    <button id="userMenuLogout" class="user-menu-item logout">退出登录</button>
+  </div>
+
+  <!-- C1. 用掉数量弹窗 -->
+  <div id="consumeModal" class="mini-modal" hidden>
+    <div class="mini-modal-card">
+      <h3>本次用掉几个？</h3>
+      <input id="consumeQty" type="number" min="1" step="1" value="1" />
+      <div class="mini-modal-actions">
+        <button id="consumeCancel" class="btn ghost">取消</button>
+        <button id="consumeOk" class="btn primary">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- C2. 待补货清单 -->
+  <div id="restockModal" class="mini-modal" hidden>
+    <div class="mini-modal-card">
+      <div class="mini-modal-head">
+        <h3>🛒 待补货清单</h3>
+        <button id="restockClose" class="icon-btn" aria-label="关闭">✕</button>
+      </div>
+      <ul id="restockList" class="restock-list"></ul>
+      <div class="mini-modal-actions">
+        <button id="restockCopy" class="btn ghost">复制清单</button>
+        <button id="restockClose2" class="btn primary">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- C3. 数据导出/导入 -->
+  <div id="dataModal" class="mini-modal" hidden>
+    <div class="mini-modal-card">
+      <div class="mini-modal-head">
+        <h3>⚙ 数据备份与恢复</h3>
+        <button id="dataClose" class="icon-btn" aria-label="关闭">✕</button>
+      </div>
+      <p class="hint">导出会把本机全部物品和账号备份成一个 JSON 文件；导入可恢复到本机（换机 / 重装不丢数据）。</p>
+      <div class="mini-modal-actions col">
+        <button id="exportBtn" class="btn primary">⬇ 导出备份(JSON)</button>
+        <button id="exportExcelBtn" class="btn ghost">📄 导出 Excel(CSV)</button>
+        <button id="importBtn" class="btn ghost">⬆ 导入备份</button>
+        <input id="importFile" type="file" accept="application/json" hidden />
+      </div>
+    </div>
+  </div>
+
+  <!-- D. 回收站 -->
+  <div id="trashModal" class="mini-modal" hidden>
+    <div class="mini-modal-card wide">
+      <div class="mini-modal-head">
+        <h3>🗑 回收站</h3>
+        <button id="trashClose" class="icon-btn" aria-label="关闭">✕</button>
+      </div>
+      <p class="hint">删除的物品会在这里保留 30 天，期间可恢复或彻底删除。</p>
+      <ul id="trashList" class="trash-list"></ul>
+      <div class="mini-modal-actions">
+        <button id="trashClear" class="btn danger">清空回收站</button>
+        <button id="trashClose2" class="btn primary">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- E. 消耗趋势统计 -->
+  <div id="statsModal" class="mini-modal" hidden>
+    <div class="mini-modal-card wide">
+      <div class="mini-modal-head">
+        <h3>📊 消耗趋势（近 30 天）</h3>
+        <button id="statsClose" class="icon-btn" aria-label="关闭">✕</button>
+      </div>
+      <div id="statsChart" class="stats-chart"></div>
+      <p id="statsSummary" class="hint"></p>
+    </div>
+  </div>
+
+  <script>
+// js/logic.js — 纯逻辑函数（无 DOM / 无 IndexedDB 依赖，可在 Node 中测试）
+
+const DAY_MS = 86400000;
+const DEFAULT_EXPIRING_SOON_DAYS = 7;
+
+// 返回本地日期的 YYYY-MM-DD，避免 toISOString() 在正时区把午夜前后的数据算到前一天 UTC
+function toLocalISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// 由生产日期/购买日期 + 保质期天数 算出过期日期
+function computeExpiry(productionDate, shelfLifeDays) {
+  if (!productionDate || shelfLifeDays == null || shelfLifeDays === '') return null;
+  const d = new Date(productionDate);
+  if (isNaN(d.getTime())) return null;
+  d.setDate(d.getDate() + Number(shelfLifeDays));
+  return d;
+}
+
+// 把 YYYY-MM-DD 字符串按本地时间解析为 Date（避免 new Date('YYYY-MM-DD') 被当作 UTC 导致时区偏移）
+function parseLocalDate(str) {
+  const [y, m, day] = String(str).split('-').map(Number);
+  if (!y || !m || !day) return null;
+  const d = new Date(y, m - 1, day);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// 距今天数（负数表示已过期）；忽略时分秒，按本地日期计算
+function daysUntil(date, now = new Date()) {
+  if (!date) return null;
+  const d = date instanceof Date ? parseLocalDate(toLocalISO(date)) : parseLocalDate(date);
+  if (!d) return null;
+  const n = parseLocalDate(toLocalISO(now));
+  if (!n) return null;
+  return Math.round((d.getTime() - n.getTime()) / DAY_MS);
+}
+
+// 解析有效过期日：优先用直接填的，否则用购买日期+天数推算
+function resolveExpiry(item) {
+  if (item.expiryDate) {
+    const d = new Date(item.expiryDate);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return computeExpiry(item.productionDate, item.shelfLifeDays);
+}
+
+// 状态判定：expired / expiring / ok（用物品自定阈值，默认 7 天）
+function getItemStatus(item, now = new Date()) {
+  const exp = resolveExpiry(item);
+  if (!exp) return 'ok'; // 无过期信息
+  const days = daysUntil(exp, now);
+  if (days < 0) return 'expired';
+  const threshold = item.expiringSoonDays != null && item.expiringSoonDays !== ''
+    ? Number(item.expiringSoonDays)
+    : DEFAULT_EXPIRING_SOON_DAYS;
+  if (days <= threshold) return 'expiring';
+  return 'ok';
+}
+
+// 单批次库存是否不足
+function isLowStock(item) {
+  if (item.lowStockThreshold == null || item.lowStockThreshold === '') return false;
+  return Number(item.quantity) <= Number(item.lowStockThreshold);
+}
+
+// 推断分类：只用于筛选，没填分类则归为「未分类」
+// 物品分组聚合始终按「名称（name）」进行，这样「牛奶」「面包」各自成卡
+function deriveCategory(name, category) {
+  const c = (category || '').trim();
+  return c || '未分类';
+}
+
+// 消费若干件/瓶：决定接下来该执行什么操作
+// amount 默认 1；支持一次用掉 N 个（V1.1 需求）
+// 返回 { action: 'update', item } | { action: 'delete', item } | { action: 'none' }
+// - 数量 <= 0 或 amount <= 0：无需操作
+// - 数量 <= amount：这箱已用完（或扣完），提示删除（由 UI 在确认后执行）
+// - 数量 > amount：扣减 amount 后更新
+function consumeOne(item, amount = 1, now = new Date()) {
+  const qty = Number(item.quantity) || 0;
+  const n = Number(amount) || 0;
+  if (qty <= 0 || n <= 0) return { action: 'none', item };
+  // 修 BUG-A：扣完即删，杜绝小数(0.5)或超额扣减成负库存
+  if (qty <= n) return { action: 'delete', item };
+  return { action: 'update', item: { ...item, quantity: qty - n, updatedAt: now.toISOString() } };
+}
+
+// 按【物品名称】归组：同一规范名称下的不同批次聚合为一张卡片
+// 例如 name 都填「牛奶」，批次标签分别写「旧批」「新批」，就会合并成「牛奶」一张卡
+function groupByName(items) {
+  const map = new Map();
+  for (const it of items) {
+    const key = (it.name || '未命名').trim() || '未命名';
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(it);
+  }
+  return [...map.entries()].map(([name, batches]) => ({ name, batches }));
+}
+
+// 分组总库存（同一类所有批次数量之和）
+function getGroupStock(group) {
+  return group.batches.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+}
+
+// 分组总体状态：任一过期 > 任一临期 > ok
+function getGroupStatus(group, now = new Date()) {
+  const statuses = group.batches.map((it) => getItemStatus(it, now));
+  if (statuses.includes('expired')) return 'expired';
+  if (statuses.includes('expiring')) return 'expiring';
+  return 'ok';
+}
+
+// 分组是否低库存：用该类总库存 与 组内设置的阈值（取最小值，最不易误报）比较
+// 阈值按「同一类物品」共用：旧牛奶2 + 新牛奶3 = 总5，阈值3，5>3 不报警
+function isGroupLowStock(group) {
+  const thresholds = group.batches
+    .map((it) => it.lowStockThreshold)
+    .filter((v) => v != null && v !== '');
+  if (!thresholds.length) return false;
+  const threshold = Math.min(...thresholds.map(Number));
+  return getGroupStock(group) <= threshold;
+}
+
+// 分组预警阈值（取组内最小值，便于展示）
+function getGroupThreshold(group) {
+  const thresholds = group.batches
+    .map((it) => it.lowStockThreshold)
+    .filter((v) => v != null && v !== '');
+  if (!thresholds.length) return null;
+  return Math.min(...thresholds.map(Number));
+}
+
+// 按「先用」顺序排序批次：过期日早 → 购买日期早 → 创建时间早
+function sortBatchesForUse(batches, now = new Date()) {
+  return [...batches].sort((a, b) => {
+    const ea = resolveExpiry(a), eb = resolveExpiry(b);
+    if (ea && eb) return ea - eb;
+    if (ea) return -1;
+    if (eb) return 1;
+    // 都没过期信息，按购买日期或创建时间
+    const pa = a.productionDate || a.createdAt || '', pb = b.productionDate || b.createdAt || '';
+    if (pa && pb) return new Date(pa) - new Date(pb);
+    if (pa) return -1;
+    if (pb) return 1;
+    return 0;
+  });
+}
+
+// 返回建议先用的那一批（多批次时才需要提醒）
+function getSuggestedFirstBatch(group, now = new Date()) {
+  if (!group.batches.length) return null;
+  return sortBatchesForUse(group.batches, now)[0];
+}
+
+// 是否需要在首页提醒"先吃旧批"：多批次、且最该先用那批还有库存
+function needsUseFirstReminder(group, now = new Date()) {
+  const sorted = sortBatchesForUse(group.batches, now);
+  if (sorted.length < 2) return false;
+  const first = sorted[0];
+  // 修 BUG-B：最早批已过期应「丢弃」而非「建议先用」，与后端契约一致
+  const exp = resolveExpiry(first);
+  const d = daysUntil(exp, now);
+  const usable = exp == null || (d != null && d >= 0);
+  // 最该先用的旧批仍可食用才建议先用（别动新批）
+  return usable && Number(first.quantity) > 0;
+}
+
+// 看板统计（按物品名称聚合）
+function summarize(items, now = new Date()) {
+  const groups = groupByName(items);
+  const total = groups.length;
+  let expired = 0, expiring = 0, low = 0, suggest = 0;
+  for (const g of groups) {
+    const st = getGroupStatus(g, now);
+    if (st === 'expired') expired++;
+    else if (st === 'expiring') expiring++;
+    if (isGroupLowStock(g)) low++;
+    if (needsUseFirstReminder(g, now)) suggest++;
+  }
+  return { total, expired, expiring, low, suggest };
+}
+
+
+// js/db.js — IndexedDB 封装（纯本地持久化）
+// 使用全局 indexedDB（浏览器原生；测试时由 mock 注入）
+
+const DB_NAME = 'inventoryDB';
+const DB_VERSION = 3;            // v3：新增 consume_logs 消耗日志（v2 的 users/items 数据自动保留）
+const STORE = 'items';
+const USERS_STORE = 'users';
+const STORE_LOG = 'consume_logs';
+const TRASH_DAYS = 30;           // 回收站保留天数
+
+let dbPromise = null;
+
+// ---------- IndexedDB 不可用时的 localStorage 兜底层 ----------
+// 某些预览/沙箱环境会禁用 IndexedDB，此时降级到 localStorage，保证页面始终能打开、能演示。
+// 仅实现本应用用到的最小子集（add/put/get/getAll/delete + users 的 by_username 索引）。
+
+function idbAvailable() {
+  try {
+    return typeof indexedDB !== 'undefined' && indexedDB !== null;
+  } catch {
+    return false;
+  }
+}
+
+function makeRequest(result, error = null) {
+  let _success = null;
+  let _error = null;
+  const req = {
+    get onsuccess() { return _success; },
+    set onsuccess(fn) {
+      _success = fn;
+      // 模拟 IndexedDB 的异步触发：赋完回调后在下一个微任务调用
+      Promise.resolve().then(() => { if (_success) _success(); });
+    },
+    get onerror() { return _error; },
+    set onerror(fn) { _error = fn; },
+    result,
+    error,
+  };
+  return req;
+}
+
+function createLocalStorageDB() {
+  const PREFIX = 'inv_ls_';
+  const KEYS = { items: PREFIX + 'items', users: PREFIX + 'users', logs: PREFIX + 'logs' };
+
+  function readAll(store) {
+    try {
+      return JSON.parse(localStorage.getItem(KEYS[store]) || '[]');
+    } catch {
+      return [];
+    }
+  }
+  function writeAll(store, arr) {
+    try {
+      localStorage.setItem(KEYS[store], JSON.stringify(arr));
+    } catch {
+      /* 存储不可用时静默降级为纯内存（仅本次会话可用） */
+    }
+  }
+
+  function makeObjectStore(storeName) {
+    return {
+      add(item) {
+        const all = readAll(storeName);
+        all.push(item);
+        writeAll(storeName, all);
+        return makeRequest(item);
+      },
+      put(item) {
+        const all = readAll(storeName);
+        const idx = all.findIndex((r) => r.id === item.id);
+        if (idx >= 0) all[idx] = item; else all.push(item);
+        writeAll(storeName, all);
+        return makeRequest(item);
+      },
+      delete(id) {
+        const all = readAll(storeName);
+        writeAll(storeName, all.filter((r) => r.id !== id));
+        return makeRequest(undefined);
+      },
+      get(id) {
+        const all = readAll(storeName);
+        return makeRequest(all.find((r) => r.id === id));
+      },
+      getAll() {
+        const all = readAll(storeName);
+        return makeRequest(all.map((r) => ({ ...r })));
+      },
+      index() {
+        // 仅 users 表用到 by_username
+        return {
+          get(key) {
+            const all = readAll(storeName);
+            return makeRequest(all.find((r) => r.username === key));
+          },
+        };
+      },
+    };
+  }
+
+  return {
+    transaction: (storeName) => ({ objectStore: () => makeObjectStore(storeName) }),
+  };
+}
+
+function initDB() {
+  if (dbPromise) return dbPromise;
+  // 环境不支持 IndexedDB（如部分预览 iframe）：降级到 localStorage
+  if (!idbAvailable()) {
+    dbPromise = Promise.resolve(createLocalStorageDB());
+    return dbPromise;
+  }
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        db.createObjectStore(STORE, { keyPath: 'id' });
+      }
+      // 用户表：用户名唯一，支持按用户名快速查登录
+      if (!db.objectStoreNames.contains(USERS_STORE)) {
+        const us = db.createObjectStore(USERS_STORE, { keyPath: 'id' });
+        us.createIndex('by_username', 'username', { unique: true });
+      }
+      // 消耗日志：记录每次「用掉/减少」事件，用于消耗趋势统计
+      if (!db.objectStoreNames.contains(STORE_LOG)) {
+        db.createObjectStore(STORE_LOG, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => {
+      // 打开失败（隐私模式/配额/沙箱限制）：降级到 localStorage，避免白屏
+      dbPromise = Promise.resolve(createLocalStorageDB());
+      resolve(createLocalStorageDB());
+    };
+  });
+  return dbPromise;
+}
+
+function store(db, mode) {
+  return db.transaction(STORE, mode).objectStore(STORE);
+}
+
+function userStore(db, mode) {
+  return db.transaction(USERS_STORE, mode).objectStore(USERS_STORE);
+}
+
+function reqToPromise(request) {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// ---------- 物品 ----------
+
+async function addItem(item) {
+  const db = await initDB();
+  return reqToPromise(store(db, 'readwrite').add(item));
+}
+
+async function updateItem(item) {
+  const db = await initDB();
+  return reqToPromise(store(db, 'readwrite').put(item));
+}
+
+async function deleteItem(id) {
+  const db = await initDB();
+  return reqToPromise(store(db, 'readwrite').delete(id));
+}
+
+async function getAllItems() {
+  const db = await initDB();
+  return reqToPromise(store(db, 'readonly').getAll());
+}
+
+async function clearItems() {
+  const db = await initDB();
+  return reqToPromise(store(db, 'readwrite').clear());
+}
+
+// ---------- 回收站（软删除） ----------
+// 普通删除只打 deletedAt 标记，不真正删；回收站可恢复，超过 TRASH_DAYS 自动清理。
+
+async function getActiveItems(ownerId) {
+  const all = await getAllItems();
+  return all.filter((it) => !it.deletedAt && (!ownerId || it.ownerId === ownerId));
+}
+
+async function getTrashedItems(ownerId) {
+  const all = await getAllItems();
+  return all
+    .filter((it) => it.deletedAt && (!ownerId || it.ownerId === ownerId))
+    .sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+}
+
+async function softDeleteItem(id) {
+  const db = await initDB();
+  const item = await reqToPromise(store(db, 'readonly').get(id));
+  if (!item) return;
+  item.deletedAt = new Date().toISOString();
+  return reqToPromise(store(db, 'readwrite').put(item));
+}
+
+async function restoreItem(id) {
+  const db = await initDB();
+  const item = await reqToPromise(store(db, 'readonly').get(id));
+  if (!item) return;
+  delete item.deletedAt;
+  return reqToPromise(store(db, 'readwrite').put(item));
+}
+
+async function purgeExpiredTrash() {
+  const all = await getAllItems();
+  const cutoff = Date.now() - TRASH_DAYS * 86400000;
+  const expired = all.filter((it) => it.deletedAt && new Date(it.deletedAt).getTime() < cutoff);
+  if (!expired.length) return;
+  const db = await initDB();
+  await Promise.all(expired.map((it) => reqToPromise(store(db, 'readwrite').delete(it.id))));
+}
+
+// ---------- 消耗日志 ----------
+
+async function addConsumeLog(entry) {
+  const db = await initDB();
+  try {
+    return await reqToPromise(db.transaction(STORE_LOG, 'readwrite').objectStore(STORE_LOG).add(entry));
+  } catch {
+    // 日志写入失败不应影响主流程
+  }
+}
+
+async function getConsumeLogs() {
+  const db = await initDB();
+  try {
+    return await reqToPromise(db.transaction(STORE_LOG, 'readonly').objectStore(STORE_LOG).getAll());
+  } catch {
+    return [];
+  }
+}
+
+// ---------- 用户（多账号登录） ----------
+
+async function addUser(user) {
+  const db = await initDB();
+  return reqToPromise(userStore(db, 'readwrite').add(user));
+}
+
+async function findUserByUsername(username) {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(USERS_STORE, 'readonly');
+    const req = tx.objectStore(USERS_STORE).index('by_username').get(username);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getAllUsers() {
+  const db = await initDB();
+  return reqToPromise(userStore(db, 'readonly').getAll());
+}
+
+
+// js/app.js — 应用层：渲染、交互、表单
+
+
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+const state = {
+  items: [],
+  search: '',
+  category: 'all',
+  location: 'all',
+  status: 'all',
+  sortBy: 'updated',
+  currentUser: null, // { id, username }，来自 localStorage 会话
+};
+
+// ---------- 账号与会话（多用户，纯本地） ----------
+const SESSION_KEY = 'inventory_session';
+
+function getSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }
+  catch { return null; }
+}
+function setSession(user) {
+  state.currentUser = { id: user.id, username: user.username };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(state.currentUser));
+}
+function clearSession() {
+  state.currentUser = null;
+  localStorage.removeItem(SESSION_KEY);
+}
+
+// 密码哈希：SHA-256(密码 + 每用户随机 salt)，本地存储仅存哈希，避免明文
+async function hashPassword(password, salt) {
+  if (crypto && crypto.subtle && crypto.subtle.digest) {
+    const enc = new TextEncoder().encode(password + salt);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  // 降级：不支持 SubtleCrypto 的环境（极少数 WebView）用轻量哈希，仅防明文落库
+  let h = 0;
+  const s = password + salt;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return 'fb-' + (h >>> 0).toString(16);
+}
+function makeSalt() {
+  return (crypto.randomUUID ? crypto.randomUUID() : 's' + Date.now() + Math.random()).slice(0, 16);
+}
+
+async function registerUser(username, password) {
+  username = (username || '').trim();
+  if (!username || !password) throw new Error('用户名和密码都要填');
+  if (password.length < 4) throw new Error('密码至少 4 位');
+  const existing = await findUserByUsername(username);
+  if (existing) throw new Error('该用户名已被占用');
+  const salt = makeSalt();
+  const user = {
+    id: uid(),
+    username,
+    salt,
+    passwordHash: await hashPassword(password, salt),
+    createdAt: new Date().toISOString(),
+  };
+  await addUser(user);
+  return user;
+}
+async function loginUser(username, password) {
+  const user = await findUserByUsername((username || '').trim());
+  if (!user) throw new Error('用户不存在');
+  const hash = await hashPassword(password, user.salt);
+  if (hash !== user.passwordHash) throw new Error('密码错误');
+  return user;
+}
+
+// ---------- 物品照片（压缩后存 dataURL，控制本地体积） ----------
+let pendingPhoto = null; // 当前表单待保存的照片 dataURL
+
+async function readPhoto(file) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onerror = () => reject(new Error('读取失败'));
+    fr.onload = () => resolve(fr.result);
+    fr.readAsDataURL(file);
+  });
+  return compressImage(dataUrl, 800, 0.82);
+}
+function compressImage(dataUrl, maxDim, quality) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > height && width > maxDim) { height = Math.round((height * maxDim) / width); width = maxDim; }
+      else if (height >= width && height > maxDim) { width = Math.round((width * maxDim) / height); height = maxDim; }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      try { resolve(canvas.toDataURL('image/jpeg', quality)); }
+      catch { resolve(dataUrl); }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
+const STATUS_LABEL = {
+  expired: '已过期',
+  expiring: '即将过期',
+  ok: '正常',
+};
+
+function uid() {
+  if (crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  return toLocalISO(new Date(d));
+}
+
+function fmtExpiry(item, now = new Date()) {
+  const exp = resolveExpiry(item);
+  if (!exp) return '未填';
+  const dateStr = fmtDate(exp);
+  const n = daysUntil(exp, now);
+  if (n < 0) return `${dateStr}（已过期 ${-n} 天）`;
+  if (n === 0) return `${dateStr}（今天过期）`;
+  return `${dateStr}（还有 ${n} 天）`;
+}
+
+function fmtGroupStock(group) {
+  const unit = group.batches[0]?.unit || '个';
+  return `${getGroupStock(group)}${esc(unit)}`; // 修 BUG-E：unit 经 esc 防注入
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
+  );
+}
+
+// ---------- 加载与渲染 ----------
+
+async function load() {
+  await purgeExpiredTrash();
+  const me = state.currentUser?.id;
+  if (!me) {
+    state.items = await getActiveItems();
+  } else {
+    // 仅显示当前账号的物品；历史遗留（ownerId 为空）视为共享，所有人可见
+    const mine = await getActiveItems(me);
+    const shared = (await getAllItems()).filter((it) => !it.deletedAt && it.ownerId == null);
+    state.items = [...mine, ...shared];
+  }
+  render();
+  refreshCategoryChips();
+  await checkReminders();
+}
+
+// 修 BUG-L：IndexedDB 不可用时捕获异常并提示，避免白屏
+function showFatal(msg) {
+  const el = document.querySelector('#emptyHint');
+  if (el) { el.hidden = false; el.textContent = msg; }
+}
+async function safeLoad() {
+  try { await load(); }
+  catch (e) {
+    console.error(e);
+    showFatal('本地存储不可用，请检查浏览器设置（如 Safari 隐私模式）后重试。');
+  }
+}
+
+function getGroups() {
+  return groupByName(state.items);
+}
+
+function render() {
+  const groups = getGroups();
+  const filtered = applyFilters(groups);
+  renderStats(groups);
+  renderDashboard(groups);
+  renderFilters(groups);
+  renderList(filtered);
+}
+
+function applyFilters(groups) {
+  const q = state.search.trim().toLowerCase();
+  const now = new Date();
+
+  let filtered = groups.filter((g) => {
+    if (state.category !== 'all') {
+      const cats = g.batches.map((it) => it.category || '未分类');
+      if (!cats.includes(state.category)) return false;
+    }
+    if (state.location !== 'all') {
+      const locs = g.batches.map((it) => (it.location || '').trim()).filter(Boolean);
+      if (!locs.includes(state.location)) return false;
+    }
+    if (q) {
+      const hay = [g.name, ...g.batches.flatMap((it) => [it.name, it.location, it.batchLabel, it.note])]
+        .join(' ')
+        .toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (state.status === 'expired' && getGroupStatus(g, now) !== 'expired') return false;
+    if (state.status === 'expiring' && getGroupStatus(g, now) !== 'expiring') return false;
+    if (state.status === 'low' && !isGroupLowStock(g)) return false;
+    if (state.status === 'suggest' && !needsUseFirstReminder(g, now)) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    if (state.sortBy === 'updated') {
+      const ua = Math.max(...a.batches.map((it) => new Date(it.updatedAt || 0).getTime()));
+      const ub = Math.max(...b.batches.map((it) => new Date(it.updatedAt || 0).getTime()));
+      return ub - ua;
+    }
+    if (state.sortBy === 'created') {
+      const ca = Math.min(...a.batches.map((it) => new Date(it.createdAt || Date.now()).getTime()));
+      const cb = Math.min(...b.batches.map((it) => new Date(it.createdAt || Date.now()).getTime()));
+      return cb - ca;
+    }
+    if (state.sortBy === 'expiry') {
+      const ba = sortBatchesForUse(a.batches, now)[0];
+      const bb = sortBatchesForUse(b.batches, now)[0];
+      const ea = resolveExpiry(ba), eb = resolveExpiry(bb);
+      if (!ea) return 1;
+      if (!eb) return -1;
+      return ea - eb;
+    }
+    if (state.sortBy === 'quantity') {
+      return getGroupStock(a) - getGroupStock(b);
+    }
+    return 0;
+  });
+
+  return filtered;
+}
+
+function renderStats(groups) {
+  const s = summarize(state.items);
+  $('#stat-total').textContent = s.total;
+  $('#stat-expiring').textContent = s.expiring;
+  $('#stat-expired').textContent = s.expired;
+  $('#stat-low').textContent = s.low;
+
+  $$('.stat-card').forEach((card) => card.classList.toggle('active', card.dataset.status === state.status));
+}
+
+function renderDashboard(groups) {
+  const now = new Date();
+  const expiredGroups = groups.filter((g) => getGroupStatus(g, now) === 'expired');
+  const expiringGroups = groups.filter((g) => getGroupStatus(g, now) === 'expiring');
+  const lowGroups = groups.filter((g) => isGroupLowStock(g));
+  const suggestGroups = groups.filter((g) => needsUseFirstReminder(g, now));
+
+  const zone = (title, arr, cls, renderRow) => {
+    if (!arr.length) return '';
+    const rows = arr.map(renderRow).join('');
+    return `<div class="zone ${cls}"><h3>${title}（${arr.length}）</h3><ul>${rows}</ul></div>`;
+  };
+
+  $('#dashboard').innerHTML = [
+    zone('🔴 已过期', expiredGroups, 'z-expired', (g) => {
+      const first = sortBatchesForUse(g.batches, now)[0];
+      return `<li><span class="z-name">${esc(g.name)}</span><span class="z-meta">${fmtExpiry(first, now)} · ${esc(first.location || '未填位置')}</span></li>`;
+    }),
+    zone('🟠 即将过期', expiringGroups, 'z-expiring', (g) => {
+      const first = sortBatchesForUse(g.batches, now)[0];
+      return `<li><span class="z-name">${esc(g.name)}</span><span class="z-meta">${fmtExpiry(first, now)} · 总库存 ${fmtGroupStock(g)}</span></li>`;
+    }),
+    zone('🟡 库存不足', lowGroups, 'z-low', (g) => {
+      const thresholds = g.batches
+        .map((it) => it.lowStockThreshold)
+        .filter((v) => v != null && v !== '');
+      const threshold = thresholds.length ? Math.min(...thresholds.map(Number)) : '-';
+      return `<li><span class="z-name">${esc(g.name)}</span><span class="z-meta">总库存 ${fmtGroupStock(g)} · 预警 ≤ ${threshold}</span></li>`;
+    }),
+    zone('🟢 建议先用', suggestGroups, 'z-suggest', (g) => {
+      const sorted = sortBatchesForUse(g.batches, now);
+      const first = sorted[0];
+      const second = sorted[1];
+      return `<li><span class="z-name">${esc(g.name)}</span><span class="z-meta">第1批（${esc(first.batchLabel || '最早批')}）剩 ${Number(first.quantity) || 0}${esc(first.unit || '')}，第2批 ${Number(second.quantity) || 0}${esc(second.unit || '')}</span></li>`;
+    }),
+  ].join('');
+}
+
+function renderFilters(groups) {
+  // 分类下拉
+  const cats = Array.from(new Set(state.items.map((it) => it.category || '未分类'))).sort();
+  const catSelect = $('#categoryFilter');
+  const curCat = state.category;
+  catSelect.innerHTML =
+    '<option value="all">全部分类</option>' +
+    cats.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  catSelect.value = cats.includes(curCat) ? curCat : 'all';
+  state.category = catSelect.value;
+
+  // 位置下拉
+  const locs = Array.from(new Set(state.items.map((it) => (it.location || '').trim()).filter(Boolean))).sort();
+  const locSelect = $('#locationFilter');
+  const curLoc = state.location;
+  locSelect.innerHTML =
+    '<option value="all">全部位置</option>' +
+    locs.map((l) => `<option value="${esc(l)}">${esc(l)}</option>`).join('');
+  locSelect.value = locs.includes(curLoc) ? curLoc : 'all';
+  state.location = locSelect.value;
+
+  // 排序
+  $('#sortFilter').value = state.sortBy;
+}
+
+function renderList(groups) {
+  const listEl = $('#list');
+  const emptyEl = $('#emptyHint');
+  if (!groups.length) {
+    listEl.innerHTML = '';
+    if (!state.items.length) {
+      emptyEl.textContent = '还没有物品，点击右上角「+ 添加」开始记录吧 ✨';
+      emptyEl.hidden = false;
+    } else {
+      emptyEl.textContent = '没有匹配的物品，换个筛选条件试试。';
+      emptyEl.hidden = false;
+    }
+    return;
+  }
+  emptyEl.hidden = true;
+
+  const now = new Date();
+  listEl.innerHTML = groups
+    .map((g) => {
+      const groupStatus = getGroupStatus(g, now);
+      const suggest = needsUseFirstReminder(g, now);
+      const sortedBatches = sortBatchesForUse(g.batches, now);
+      const unit = sortedBatches[0]?.unit || '个';
+
+      const batchHtml = sortedBatches
+        .map((it, idx) => {
+          const st = getItemStatus(it, now);
+          const isFirst = idx === 0;
+          const qty = `${Number(it.quantity) || 0}${it.unit || ''}`;
+          return `
+          <div class="batch ${st} ${isFirst && suggest ? 'batch-first' : ''}" data-id="${it.id}">
+            <div class="batch-header">
+              ${it.photo ? `<img class="batch-thumb" data-act="photo" data-id="${esc(it.id)}" src="${it.photo}" alt="${esc(it.name)}照片" />` : ''}
+              <div class="batch-left">
+                <span class="batch-no">第 ${idx + 1} 批</span>
+                ${it.name ? `<span class="batch-name">${esc(it.name)}</span>` : ''}
+                ${it.batchLabel ? `<span class="batch-label">${esc(it.batchLabel)}</span>` : ''}
+                ${isFirst && suggest ? `<span class="use-first-badge">先用这箱</span>` : ''}
+                <span class="badge ${st}">${STATUS_LABEL[st]}</span>
+              </div>
+              <div class="qty-stepper">
+                <button class="mini qty" data-act="minus" data-id="${it.id}" aria-label="减少1">−</button>
+                <span class="batch-qty">${esc(qty)}</span>
+                <button class="mini qty" data-act="plus" data-id="${it.id}" aria-label="增加1">+</button>
+              </div>
+            </div>
+            <div class="batch-body">
+              <span>📍 ${esc(it.location || '未填位置')}</span>
+              <span>🛒 生产日期：${it.productionDate ? fmtDate(it.productionDate) : '未填'}</span>
+              <span>⏰ 过期日期：${fmtExpiry(it, now)}</span>
+              <span>⚠️ 低库存阈值：${it.lowStockThreshold != null ? esc(String(it.lowStockThreshold)) + esc(it.unit || '个') : '未设'}</span>
+              ${it.note ? `<span class="batch-note">📝 ${esc(it.note)}</span>` : ''}
+            </div>
+            <div class="batch-actions">
+              <button class="mini use" data-act="use" data-id="${it.id}">用掉</button>
+              <button class="mini" data-act="edit" data-id="${it.id}">编辑</button>
+              <button class="mini danger" data-act="del" data-id="${it.id}">删除</button>
+            </div>
+          </div>`;
+        })
+        .join('');
+
+      return `
+      <div class="group-card">
+        <div class="group-header">
+          <div class="group-left">
+            <h3 class="group-title">${esc(g.name)}</h3>
+            ${suggest ? '<span class="use-first-badge">先用最早批</span>' : ''}
+            <span class="badge ${groupStatus}">${STATUS_LABEL[groupStatus]}</span>
+          </div>
+          <div class="group-right">
+            <span class="group-stock">共 ${getGroupStock(g)}${unit}</span>
+          </div>
+        </div>
+        <div class="batches">${batchHtml}</div>
+      </div>`;
+    })
+    .join('');
+}
+
+// ---------- 表单 ----------
+
+function openModal(item = null) {
+  const form = $('#itemForm');
+  form.reset();
+  $('#computedHint').textContent = '';
+  // 照片：编辑时回填已有照片，新增时清空
+  pendingPhoto = item && item.photo ? item.photo : null;
+  if (pendingPhoto) {
+    $('#photoImg').src = pendingPhoto;
+    $('#photoPreview').hidden = false;
+    $('#photoPickBtn').textContent = '📷 重选照片';
+  } else {
+    $('#photoPreview').hidden = true;
+    $('#photoImg').src = '';
+    $('#photoPickBtn').textContent = '📷 选择照片';
+  }
+  $('#f_photo').value = '';
+  if (item) {
+    $('#modalTitle').textContent = '编辑物品';
+    $('#itemId').value = item.id;
+    $('#f_name').value = item.name || '';
+    $('#f_category').value = item.category || '';
+    $('#f_location').value = item.location || '';
+    $('#f_quantity').value = item.quantity ?? '';
+    $('#f_unit').value = item.unit || '个';
+    $('#f_productionDate').value = fmtDate(item.productionDate);
+    $('#f_expiryDate').value = fmtDate(item.expiryDate);
+    $('#f_shelfLifeDays').value = item.shelfLifeDays ?? '';
+    $('#f_expiringSoonDays').value = item.expiringSoonDays ?? '';
+    $('#f_lowStockThreshold').value = item.lowStockThreshold ?? '';
+    $('#f_batchLabel').value = item.batchLabel || '';
+    $('#f_note').value = item.note || '';
+    $('#deleteBtn').hidden = false;
+  } else {
+    $('#modalTitle').textContent = '添加物品';
+    $('#itemId').value = '';
+    $('#deleteBtn').hidden = true;
+  }
+  // 判定用哪种录入方式：有确切过期日且无生产日期+保质期组合 → 手动模式
+  const manualMode = !!(item && item.expiryDate && !(item.productionDate && item.shelfLifeDays));
+  setExpiryMode(manualMode ? 'manual' : 'auto', { prefill: false });
+  $('#modal').hidden = false;
+}
+
+function closeModal() {
+  $('#modal').hidden = true;
+}
+
+function setExpiryMode(mode, { prefill = true } = {}) {
+  const auto = mode === 'auto';
+  $$('.seg').forEach((s) => s.classList.toggle('active', s.dataset.mode === mode));
+  $('#expiryAutoFields').hidden = !auto;
+  $('#computedHint').hidden = !auto;
+  $('#expiryManualField').hidden = auto;
+  if (auto) {
+    updateComputedHint();
+  } else if (prefill) {
+    // 切到手动时，把已算出的过期日带过去，方便用户微调
+    const exp = computeExpiry($('#f_productionDate').value, $('#f_shelfLifeDays').value);
+    $('#f_expiryDate').value = exp ? fmtDate(exp) : '';
+  }
+}
+
+function updateComputedHint() {
+  const d = $('#f_productionDate').value;
+  const days = $('#f_shelfLifeDays').value;
+  const exp = computeExpiry(d, days);
+  $('#computedHint').textContent = exp
+    ? `→ 预计过期日：${fmtDate(exp)}（已自动保存，无需手填）`
+    : '填写生产日期与保质期后，过期日会自动算出并保存。';
+}
+
+async function submitForm(e) {
+  e.preventDefault();
+  const id = $('#itemId').value;
+  const mode = (document.querySelector('input[name="expiryMode"]:checked') || {}).value || 'auto';
+
+  // 保留原有归属，编辑时不改变物品的 ownerId
+  const existing = id ? state.items.find((it) => it.id === id) : null;
+
+  // 只保存一种来源的过期信息，避免两个来源互相打架
+  let productionDate = null, shelfLifeDays = null, expiryDate = null;
+  if (mode === 'auto') {
+    productionDate = $('#f_productionDate').value || null;
+    shelfLifeDays = $('#f_shelfLifeDays').value === '' ? null : Number($('#f_shelfLifeDays').value);
+    // 过期日不单独存，读取时由「生产日期+保质期」自动算
+  } else {
+    expiryDate = $('#f_expiryDate').value || null;
+  }
+
+  const item = {
+    id: id || uid(),
+    name: $('#f_name').value.trim(),
+    category: deriveCategory($('#f_name').value, $('#f_category').value),
+    location: $('#f_location').value.trim(),
+    quantity: $('#f_quantity').value === '' ? 0 : Number($('#f_quantity').value),
+    unit: $('#f_unit').value.trim() || '个',
+    productionDate,
+    expiryDate,
+    shelfLifeDays,
+    lowStockThreshold: $('#f_lowStockThreshold').value === '' ? null : Number($('#f_lowStockThreshold').value),
+    expiringSoonDays: $('#f_expiringSoonDays').value === '' ? null : Number($('#f_expiringSoonDays').value),
+    batchLabel: $('#f_batchLabel').value.trim() || null,
+    note: $('#f_note').value.trim(),
+    ownerId: existing ? existing.ownerId : (state.currentUser?.id ?? null),
+    photo: pendingPhoto,
+    updatedAt: new Date().toISOString(),
+  };
+  if (id) {
+    await updateItem(item);
+  } else {
+    item.createdAt = item.updatedAt;
+    await addItem(item);
+  }
+  closeModal();
+  await safeLoad();
+}
+
+async function doDelete() {
+  const id = $('#itemId').value;
+  if (!id) return;
+  if (!confirm('确定删除这一批物品？\n（会进入回收站，30 天内可恢复）')) return;
+  await softDeleteItem(id);
+  closeModal();
+  await safeLoad();
+}
+
+// 列表上直接「用掉 N」：无需进编辑页；扣完时弹窗确认是否删除
+async function adjustQuantity(item, delta) {
+  const qty = Number(item.quantity) || 0;
+  const next = Math.max(0, qty + delta);
+  if (next === 0) {
+    if (confirm(`「${item.name || ''}」数量将变为 0，删除这一批？\n（取消则保留 1 个；确认后进回收站可恢复）`)) {
+      await recordConsume(item, qty); // 记录本次实际消耗的数量
+      await softDeleteItem(item.id);
+    } else {
+      return; // 取消删除，保持原数量
+    }
+  } else {
+    const updated = { ...item, quantity: next, updatedAt: new Date().toISOString() };
+    await updateItem(updated);
+    if (delta < 0) await recordConsume(item, Math.abs(delta));
+  }
+  await safeLoad();
+}
+
+async function consumeItem(item, amount = 1) {
+  const result = consumeOne(item, amount);
+  if (result.action === 'none') return;
+  if (result.action === 'update') {
+    await updateItem(result.item);
+    await recordConsume(item, amount);
+    await safeLoad();
+    return;
+  }
+  // action === 'delete'：这箱已用完，弹窗提醒后删除（进回收站）
+  const label = item.name || item.category || '这条记录';
+  if (confirm(`「${label}」这箱已用完，删除这条记录？\n（进回收站，30 天内可恢复）`)) {
+    await recordConsume(item, Number(item.quantity) || 0);
+    await softDeleteItem(item.id);
+    await safeLoad();
+  }
+}
+
+// 记录一次消耗事件，供「消耗趋势统计」使用
+async function recordConsume(item, qty) {
+  if (!(qty > 0)) return;
+  await addConsumeLog({
+    id: uid(),
+    ownerId: state.currentUser?.id || null,
+    itemId: item.id,
+    name: item.name || item.category || '物品',
+    qty,
+    at: new Date().toISOString(),
+  });
+}
+
+// ---------- 事件绑定 ----------
+
+function bind() {
+  $('#addBtn').addEventListener('click', () => openModal());
+  $('#modalClose').addEventListener('click', closeModal);
+  $('#cancelBtn').addEventListener('click', closeModal);
+  $('#modalBackdrop').addEventListener('click', closeModal);
+  $('#itemForm').addEventListener('submit', submitForm);
+  $('#deleteBtn').addEventListener('click', doDelete);
+  $('#userBtn').addEventListener('click', (e) => { e.stopPropagation(); openUserMenu(); });
+  bindPhoto();
+
+  $('#f_productionDate').addEventListener('input', updateComputedHint);
+  $('#f_shelfLifeDays').addEventListener('input', updateComputedHint);
+  $$('input[name="expiryMode"]').forEach((r) =>
+    r.addEventListener('change', (e) => setExpiryMode(e.target.value))
+  );
+
+  $('#searchInput').addEventListener('input', (e) => {
+    state.search = e.target.value;
+    render();
+  });
+  $('#categoryFilter').addEventListener('change', (e) => {
+    state.category = e.target.value;
+    refreshCategoryChips();
+    render();
+  });
+  $('#locationFilter').addEventListener('change', (e) => {
+    state.location = e.target.value;
+    render();
+  });
+  $('#sortFilter').addEventListener('change', (e) => {
+    state.sortBy = e.target.value;
+    render();
+  });
+
+  $('.stats-row').addEventListener('click', (e) => {
+    const card = e.target.closest('.stat-card');
+    if (!card) return;
+    state.status = card.dataset.status;
+    render();
+  });
+
+  $('#list').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const item = state.items.find((it) => it.id === id);
+    if (!item) return;
+    if (btn.dataset.act === 'edit') {
+      openModal(item);
+      return;
+    }
+    if (btn.dataset.act === 'photo') {
+      const it = state.items.find((x) => x.id === btn.dataset.id);
+      if (it && it.photo) openLightbox(it.photo);
+      return;
+    }
+    if (btn.dataset.act === 'use') {
+      openConsume(item);
+      return;
+    }
+    if (btn.dataset.act === 'plus') {
+      await adjustQuantity(item, 1);
+      return;
+    }
+    if (btn.dataset.act === 'minus') {
+      await adjustQuantity(item, -1);
+      return;
+    }
+    if (btn.dataset.act === 'del') {
+      if (confirm(`删除「${item.name || item.category}」的这一批？\n（进回收站，30 天内可恢复）`)) {
+        await softDeleteItem(id);
+        await safeLoad();
+      }
+    }
+  });
+
+  // 新增交互绑定
+  $('#lightbox').addEventListener('click', (e) => {
+    if (e.target.id === 'lightbox' || e.target.id === 'lightboxClose') closeLightbox();
+  });
+  $('#consumeOk').addEventListener('click', confirmConsume);
+  $('#consumeCancel').addEventListener('click', () => { $('#consumeModal').hidden = true; consumeTarget = null; });
+  $('#restockBtn').addEventListener('click', openRestock);
+  $('#restockClose').addEventListener('click', () => { $('#restockModal').hidden = true; });
+  $('#restockClose2').addEventListener('click', () => { $('#restockModal').hidden = true; });
+  $('#restockCopy').addEventListener('click', copyRestock);
+  $('#dataBtn').addEventListener('click', () => { $('#dataModal').hidden = false; });
+  $('#dataClose').addEventListener('click', () => { $('#dataModal').hidden = true; });
+  $('#exportBtn').addEventListener('click', exportData);
+  $('#importBtn').addEventListener('click', () => $('#importFile').click());
+  $('#importFile').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    await importData(file);
+    e.target.value = '';
+  });
+  $('#userMenuList').addEventListener('click', async (e) => {
+    const b = e.target.closest('button[data-user]');
+    if (b) await switchUser(b.dataset.user);
+  });
+  $('#userMenuLogout').addEventListener('click', () => { $('#userMenu').hidden = true; logout(); });
+
+  // 分类快捷筛选条
+  $('#categoryChips').addEventListener('click', (e) => {
+    const chip = e.target.closest('button[data-cat]');
+    if (!chip) return;
+    state.category = chip.dataset.cat;
+    const sel = $('#categoryFilter');
+    if (sel) sel.value = state.category;
+    refreshCategoryChips();
+    render();
+  });
+  // 提醒：请求通知权限并立即检查
+  $('#bellBtn').addEventListener('click', async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      try { await Notification.requestPermission(); } catch { /* ignore */ }
+    }
+    await checkReminders(true);
+  });
+  // 统计
+  $('#statsBtn').addEventListener('click', openStats);
+  // 回收站
+  $('#trashBtn').addEventListener('click', openTrash);
+  $('#trashClose').addEventListener('click', () => { $('#trashModal').hidden = true; });
+  $('#trashClose2').addEventListener('click', () => { $('#trashModal').hidden = true; });
+  $('#trashClear').addEventListener('click', clearTrash);
+  $('#trashList').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.act === 'restore') await restoreTrash(id);
+    else if (btn.dataset.act === 'purge') await purgeTrash(id);
+  });
+  $('#statsClose').addEventListener('click', () => { $('#statsModal').hidden = true; });
+  // Excel 导出
+  $('#exportExcelBtn').addEventListener('click', exportExcel);
+
+  document.addEventListener('click', (e) => {
+    const menu = $('#userMenu');
+    if (menu.hidden) return;
+    if (!menu.contains(e.target) && e.target.id !== 'userBtn') menu.hidden = true;
+  });
+}
+
+// ---------- 照片上传交互 ----------
+
+function bindPhoto() {
+  $('#photoPickBtn').addEventListener('click', () => $('#f_photo').click());
+  $('#f_photo').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      pendingPhoto = await readPhoto(file);
+      $('#photoImg').src = pendingPhoto;
+      $('#photoPreview').hidden = false;
+      $('#photoPickBtn').textContent = '📷 重选照片';
+    } catch (err) {
+      alert('照片读取失败：' + (err.message || err));
+    }
+  });
+  $('#photoRemoveBtn').addEventListener('click', () => {
+    pendingPhoto = null;
+    $('#f_photo').value = '';
+    $('#photoPreview').hidden = true;
+    $('#photoImg').src = '';
+    $('#photoPickBtn').textContent = '📷 选择照片';
+  });
+}
+
+// ---------- 新增交互：看大图 / 用掉N / 切换账号 / 补货 / 数据 ----------
+let consumeTarget = null;
+
+function openLightbox(photo) {
+  $('#lightboxImg').src = photo;
+  $('#lightbox').hidden = false;
+}
+function closeLightbox() {
+  $('#lightbox').hidden = true;
+  $('#lightboxImg').src = '';
+}
+function openConsume(item) {
+  consumeTarget = item;
+  $('#consumeQty').value = '1';
+  $('#consumeModal').hidden = false;
+  try { $('#consumeQty').focus(); } catch { /* ignore */ }
+}
+async function confirmConsume() {
+  const n = Math.max(1, Math.floor(Number($('#consumeQty').value) || 1));
+  const item = consumeTarget;
+  $('#consumeModal').hidden = true;
+  consumeTarget = null;
+  if (item) await consumeItem(item, n);
+}
+
+// ---------- 新增：分类筛选条 / 回收站 / 通知 / 统计 / Excel ----------
+
+// 分类快捷筛选条：依当前数据动态生成
+function refreshCategoryChips() {
+  const chips = $('#categoryChips');
+  if (!chips) return;
+  const cats = Array.from(new Set(state.items.map((it) => (it.category || '未分类').trim()).filter(Boolean)));
+  const all = [{ key: 'all', label: '全部' }].concat(cats.map((c) => ({ key: c, label: c })));
+  chips.innerHTML = all
+    .map((c) => `<button class="chip ${state.category === c.key ? 'active' : ''}" data-cat="${esc(c.key)}">${esc(c.label)}</button>`)
+    .join('');
+  chips.hidden = cats.length === 0;
+}
+
+// D. 回收站（软删除恢复）
+async function openTrash() {
+  await renderTrashList();
+  $('#trashModal').hidden = false;
+}
+async function renderTrashList() {
+  const items = await getTrashedItems(state.currentUser?.id || null);
+  const list = $('#trashList');
+  if (!items.length) {
+    list.innerHTML = '<li class="trash-empty">回收站是空的 ✨</li>';
+    return;
+  }
+  list.innerHTML = items
+    .map((it) => {
+      const days = Math.max(0, Math.ceil((Date.now() - new Date(it.deletedAt).getTime()) / 86400000));
+      const left = Math.max(0, 30 - days);
+      return `<li class="trash-item">
+        <div class="trash-info">
+          <span class="trash-name">${esc(it.name || it.category || '物品')}</span>
+          <span class="trash-meta">${esc(it.location || '')} · 剩 ${Number(it.quantity) || 0}${esc(it.unit || '')} · ${left} 天后彻底删除</span>
+        </div>
+        <div class="trash-actions">
+          <button class="mini" data-act="restore" data-id="${esc(it.id)}">恢复</button>
+          <button class="mini danger" data-act="purge" data-id="${esc(it.id)}">彻底删除</button>
+        </div>
+      </li>`;
+    })
+    .join('');
+}
+async function restoreTrash(id) {
+  await restoreItem(id);
+  await renderTrashList();
+  await safeLoad();
+}
+async function purgeTrash(id) {
+  if (!confirm('彻底删除后无法恢复，确定？')) return;
+  await deleteItem(id);
+  await renderTrashList();
+  await safeLoad();
+}
+async function clearTrash() {
+  if (!confirm('清空回收站？所有删除的物品将永久消失。')) return;
+  const items = await getTrashedItems(state.currentUser?.id || null);
+  for (const it of items) await deleteItem(it.id);
+  await renderTrashList();
+  await safeLoad();
+}
+
+// 浏览器通知：临期 / 已过期 / 低库存（每天最多弹一次，force 可忽略节流）
+async function checkReminders(force = false) {
+  try {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (!force && localStorage.getItem('inv_reminder_date') === today) return;
+    const groups = getGroups();
+    const now = new Date();
+    const expired = groups.filter((g) => getGroupStatus(g, now) === 'expired').length;
+    const expiring = groups.filter((g) => getGroupStatus(g, now) === 'expiring').length;
+    const low = groups.filter((g) => isGroupLowStock(g)).length;
+    const parts = [];
+    if (expired) parts.push(`${expired} 件已过期`);
+    if (expiring) parts.push(`${expiring} 件即将过期`);
+    if (low) parts.push(`${low} 件库存不足`);
+    if (parts.length) {
+      new Notification('📦 库存提醒', { body: parts.join('，') + '，记得处理～' });
+      localStorage.setItem('inv_reminder_date', today);
+    }
+  } catch { /* 通知失败不影响主流程 */ }
+}
+
+// E. 消耗趋势统计（近 30 天）
+async function openStats() {
+  const logs = await getConsumeLogs();
+  const me = state.currentUser?.id;
+  const mine = logs.filter((l) => !me || l.ownerId == null || l.ownerId === me);
+  const days = 30;
+  const today = new Date();
+  const buckets = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    buckets.push({ date: d, key: toLocalISO(d), total: 0, byName: {} });
+  }
+  const map = Object.fromEntries(buckets.map((b) => [b.key, b]));
+  for (const l of mine) {
+    const b = map[toLocalISO(new Date(l.at))];
+    if (b) { b.total += l.qty; b.byName[l.name] = (b.byName[l.name] || 0) + l.qty; }
+  }
+  const max = Math.max(1, ...buckets.map((b) => b.total));
+  $('#statsChart').innerHTML = buckets
+    .map((b) => {
+      const h = Math.round((b.total / max) * 100);
+      const detail = Object.entries(b.byName).map(([n, q]) => `${n}×${q}`).join('、');
+      return `<div class="bar-col" title="${b.key}${b.total ? '：' + detail : ''}">
+        <div class="bar ${b.total ? '' : 'empty'}" style="height:${h}px"></div>
+        <span class="bar-day">${b.date.getDate()}</span>
+      </div>`;
+    })
+    .join('');
+  const totalQty = buckets.reduce((s, b) => s + b.total, 0);
+  const agg = {};
+  for (const l of mine) agg[l.name] = (agg[l.name] || 0) + l.qty;
+  const top = Object.entries(agg).sort((a, b) => b[1] - a[1])[0];
+  $('#statsSummary').textContent = `近 30 天共消耗 ${totalQty} 个；消耗最多的是 ${top ? top[0] + `（${top[1]} 个）` : '暂无'}。`;
+  $('#statsModal').hidden = false;
+}
+
+// 导出 Excel（CSV，带 BOM 让 Excel 正确识别中文）
+function exportExcel() {
+  const me = state.currentUser?.id;
+  const items = (!me ? state.items : state.items.filter((it) => it.ownerId == null || it.ownerId === me));
+  const header = ['名称', '分类', '位置', '数量', '单位', '生产日期', '过期日期', '临期天数', '低库存阈值', '批次标签', '备注'];
+  const rows = items.map((it) => [
+    it.name || '', it.category || '', it.location || '', it.quantity ?? '', it.unit || '',
+    it.productionDate || '', it.expiryDate || '', it.expiringSoonDays ?? '', it.lowStockThreshold ?? '',
+    it.batchLabel || '', it.note || '',
+  ]);
+  const csv = [header, ...rows]
+    .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+    .join('\r\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `库存清单_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// B. 切换账号（本地多账号，免密快捷切换）
+async function openUserMenu() {
+  const users = await getAllUsers();
+  const list = $('#userMenuList');
+  if (!users.length) {
+    list.innerHTML = '<div class="user-menu-empty">还没有其他账号</div>';
+  } else {
+    list.innerHTML = users.map((u) => {
+      const active = state.currentUser && state.currentUser.username === u.username;
+      return `<button class="user-menu-item ${active ? 'active' : ''}" data-user="${esc(u.username)}">${esc(u.username)}${active ? ' ✓' : ''}</button>`;
+    }).join('');
+  }
+  $('#userMenu').hidden = false;
+}
+async function switchUser(username) {
+  const user = await findUserByUsername(username);
+  if (!user) return;
+  setSession(user);
+  $('#userMenu').hidden = true;
+  updateUserChip();
+  await safeLoad();
+}
+
+// C2. 待补货清单
+function buildRestockList() {
+  const groups = getGroups();
+  const now = new Date();
+  const rows = [];
+  for (const g of groups) {
+    if (isGroupLowStock(g)) {
+      const threshold = getGroupThreshold(g) || 0;
+      const stock = getGroupStock(g);
+      const need = Math.max(1, Math.ceil(threshold - stock) + 1);
+      rows.push({ name: g.name, need, reason: `库存不足（剩 ${stock}${g.batches[0]?.unit || ''} ≤ 阈值 ${threshold}）` });
+    } else {
+      const st = getGroupStatus(g, now);
+      if (st === 'expired') rows.push({ name: g.name, need: 1, reason: '已过期，需处理 / 补货' });
+      else if (st === 'expiring') rows.push({ name: g.name, need: 1, reason: '即将过期，按需补货' });
+    }
+  }
+  return rows;
+}
+function openRestock() {
+  const rows = buildRestockList();
+  const ul = $('#restockList');
+  if (!rows.length) ul.innerHTML = '<li class="restock-empty">🎉 暂无需补货的物品</li>';
+  else ul.innerHTML = rows.map((r) => `<li><b>${esc(r.name)}</b> ×${r.need} — ${esc(r.reason)}</li>`).join('');
+  $('#restockModal').hidden = false;
+}
+function copyRestock() {
+  const text = Array.from($$('#restockList li')).map((li) => li.textContent).join('\n');
+  if (navigator.clipboard && text) {
+    navigator.clipboard.writeText(text).then(() => alert('已复制补货清单')).catch(() => {});
+  }
+}
+
+// C3. 数据导出 / 导入（换机 / 重装不丢）
+async function exportData() {
+  try {
+    const items = await getAllItems();
+    const users = await getAllUsers();
+    const payload = { app: 'inventory', version: 1, exportedAt: new Date().toISOString(), items, users };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `inventory-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    alert('已导出备份文件');
+  } catch (e) { alert('导出失败：' + (e.message || e)); }
+}
+async function importData(file) {
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    const items = Array.isArray(data.items) ? data.items : [];
+    const users = Array.isArray(data.users) ? data.users : [];
+    if (!items.length && !users.length) throw new Error('备份文件为空或格式不正确');
+    if (!confirm(`即将导入：${items.length} 件物品、${users.length} 个账号。\n同名物品 / 账号将被覆盖，确定继续？`)) return;
+    for (const it of items) await updateItem(it);
+    for (const u of users) { try { await addUser(u); } catch { /* 用户名冲突跳过 */ } }
+    $('#dataModal').hidden = true;
+    await safeLoad();
+    alert('导入完成');
+  } catch (e) { alert('导入失败：' + (e.message || e)); }
+}
+
+// ---------- 登录 / 注册 交互 ----------
+
+let authTab = 'login';
+
+function showAuth() { $('#auth').hidden = false; resetAuthForm(); }
+function hideAuth() { $('#auth').hidden = true; }
+
+function resetAuthForm() {
+  $('#authMsg').hidden = true;
+  $('#authForm').reset();
+}
+function setAuthTab(tab) {
+  authTab = tab;
+  $$('.auth-tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === tab));
+  $('#authConfirmWrap').hidden = tab !== 'register';
+  $('#authSubmit').textContent = tab === 'register' ? '注册并进入' : '登录';
+  $('#authPassword').setAttribute('autocomplete', tab === 'register' ? 'new-password' : 'current-password');
+}
+function updateUserChip() {
+  const on = !!state.currentUser;
+  const chip = $('#userBtn');
+  chip.hidden = !on;
+  if (on) chip.textContent = `👤 ${state.currentUser.username}`;
+  ['#dataBtn', '#restockBtn', '#bellBtn', '#statsBtn', '#trashBtn'].forEach((s) => { $(s).hidden = !on; });
+}
+async function logout() {
+  if (!confirm('退出当前账号？切换账号后可查看各自的库存。')) return;
+  clearSession();
+  state.items = [];
+  updateUserChip();
+  render();
+  showAuth();
+}
+
+function bindAuth() {
+  $$('.auth-tab').forEach((t) => t.addEventListener('click', () => setAuthTab(t.dataset.tab)));
+  $('#authForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = $('#authUsername').value.trim();
+    const password = $('#authPassword').value;
+    const msg = $('#authMsg');
+    msg.hidden = false;
+    msg.classList.remove('error');
+    try {
+      if (authTab === 'register' && $('#authConfirm').value !== password) {
+        throw new Error('两次密码不一致');
+      }
+      const user = authTab === 'register'
+        ? await registerUser(username, password)
+        : await loginUser(username, password);
+      setSession(user);
+      updateUserChip();
+      hideAuth();
+      await safeLoad();
+    } catch (err) {
+      msg.textContent = err.message || '操作失败';
+      msg.classList.add('error');
+    }
+  });
+}
+
+// ---------- 启动 ----------
+
+async function start() {
+  try { await initDB(); }
+  catch (e) {
+    console.error(e);
+    showFatal('本地存储初始化失败，数据无法保存，请更换浏览器或关闭隐私模式后重试。');
+    return;
+  }
+  bind();
+  bindAuth();
+  updateUserChip();
+  const session = getSession();
+  if (session && session.id) {
+    state.currentUser = session;
+    updateUserChip();
+    hideAuth();
+    await safeLoad();
+  } else {
+    showAuth();
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
+
+start();
+
+</script>
+</body>
+</html>

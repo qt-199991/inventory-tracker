@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#2e7d32" />
+  <title>物品库存清单</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- 登录 / 注册 遮罩 -->
+  <div id="auth" class="auth-overlay" hidden>
+    <div class="auth-card">
+      <div class="auth-brand"><span>📦</span> 库存清单</div>
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-tab="login">登录</button>
+        <button type="button" class="auth-tab" data-tab="register">注册</button>
+      </div>
+      <form id="authForm" class="form">
+        <label class="full">
+          <span class="label-text">用户名</span>
+          <input id="authUsername" type="text" autocomplete="username" placeholder="如：妈妈 / 小明" />
+        </label>
+        <label class="full">
+          <span class="label-text">密码</span>
+          <input id="authPassword" type="password" autocomplete="current-password" placeholder="至少 4 位" />
+        </label>
+        <label class="full" id="authConfirmWrap" hidden>
+          <span class="label-text">确认密码</span>
+          <input id="authConfirm" type="password" autocomplete="new-password" placeholder="再输一次" />
+        </label>
+        <p id="authMsg" class="auth-msg" hidden></p>
+        <button type="submit" id="authSubmit" class="btn primary">登录</button>
+      </form>
+      <p class="auth-hint">数据只存在本机浏览器，不同账号的库存互相不可见。</p>
+    </div>
+  </div>
+
+  <header class="app-header">
+    <div class="top-bar">
+      <div class="brand">
+        <span class="brand-icon">📦</span>
+        <span class="brand-text">库存清单</span>
+      </div>
+      <input id="searchInput" class="search" type="search" placeholder="搜索物品…" />
+      <button id="bellBtn" class="icon-top-btn" hidden title="提醒" aria-label="提醒">🔔</button>
+      <button id="statsBtn" class="icon-top-btn" hidden title="消耗统计" aria-label="统计">📊</button>
+      <button id="trashBtn" class="icon-top-btn" hidden title="回收站" aria-label="回收站">🗑</button>
+      <button id="dataBtn" class="icon-top-btn" hidden title="数据备份与恢复" aria-label="数据">⚙</button>
+      <button id="userBtn" class="user-btn" hidden aria-label="当前账号">👤 用户</button>
+      <button id="addBtn" class="add-btn" aria-label="添加物品">
+        <span class="add-icon">+</span>
+        <span>添加</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 统计卡 -->
+    <section class="stats-row" aria-label="库存统计">
+      <button class="stat-card active" data-status="all">
+        <b id="stat-total">0</b>
+        <span>全部物品</span>
+      </button>
+      <button class="stat-card" data-status="expiring">
+        <b id="stat-expiring">0</b>
+        <span>即将过期</span>
+      </button>
+      <button class="stat-card" data-status="expired">
+        <b id="stat-expired">0</b>
+        <span>已过期</span>
+      </button>
+      <button class="stat-card" data-status="low">
+        <b id="stat-low">0</b>
+        <span>低库存</span>
+      </button>
+    </section>
+
+    <!-- 工具条 -->
+    <div class="toolbar">
+      <div id="categoryChips" class="chips" aria-label="分类快捷筛选"></div>
+      <button id="restockBtn" class="tool-btn" hidden>🛒 待补货清单</button>
+    </div>
+
+    <!-- 看板 -->
+    <section id="dashboard" class="dashboard" aria-label="到期与库存提醒"></section>
+
+    <!-- 筛选 -->
+    <section class="filter-row" aria-label="筛选与排序">
+      <div class="filter-field">
+        <select id="categoryFilter">
+          <option value="all">全部分类</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <select id="locationFilter">
+          <option value="all">全部位置</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <select id="sortFilter">
+          <option value="updated">最近更新</option>
+          <option value="created">最近添加</option>
+          <option value="expiry">过期日期最近</option>
+          <option value="quantity">库存最少</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- 列表 -->
+    <section id="list" class="list" aria-label="物品列表"></section>
+    <p id="emptyHint" class="empty-hint" hidden>
+      还没有物品，点击右上角「+ 添加」开始记录吧 ✨
+    </p>
+  </main>
+
+  <!-- 新增/编辑 表单弹层 -->
+  <div id="modal" class="modal" hidden>
+    <div id="modalBackdrop" class="modal-backdrop"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="modalTitle">添加物品</h2>
+        <button id="modalClose" class="icon-btn" aria-label="关闭">✕</button>
+      </div>
+      <form id="itemForm" class="form">
+        <input type="hidden" id="itemId" />
+
+        <label class="full">
+          <span class="label-text">物品名称 <em class="required">*</em></span>
+          <input id="f_name" type="text" required placeholder="如：洗衣液、牛奶、感冒药" />
+        </label>
+
+        <div class="row">
+          <label>
+            <span class="label-text">分类<small>（仅用于筛选）</small></span>
+            <input id="f_category" type="text" list="catList" placeholder="如：食品" />
+            <datalist id="catList">
+              <option value="食品"></option>
+              <option value="药品"></option>
+              <option value="日用品"></option>
+              <option value="化妆品"></option>
+              <option value="其他"></option>
+            </datalist>
+          </label>
+          <label>
+            <span class="label-text">存放位置 <em class="required">*</em></span>
+            <input id="f_location" type="text" required placeholder="如：阳台柜" />
+          </label>
+        </div>
+
+        <div class="row">
+          <label>
+            <span class="label-text">数量</span>
+            <input id="f_quantity" type="number" min="0" step="0.5" placeholder="1" />
+          </label>
+          <label>
+            <span class="label-text">单位</span>
+            <input id="f_unit" type="text" placeholder="件 / 瓶 / 盒" value="个" />
+          </label>
+        </div>
+
+        <!-- 过期信息：两种录入方式，默认按「生产日期＋保质期」自动算 -->
+        <div class="expiry-mode" role="radiogroup" aria-label="过期信息录入方式">
+          <label class="seg active" data-mode="auto">
+            <input type="radio" name="expiryMode" value="auto" checked />
+            <span>生产日期＋保质期<small>自动算过期日</small></span>
+          </label>
+          <label class="seg" data-mode="manual">
+            <input type="radio" name="expiryMode" value="manual" />
+            <span>直接填过期日期</span>
+          </label>
+        </div>
+
+        <div class="row" id="expiryAutoFields">
+          <label>
+            <span class="label-text">生产日期</span>
+            <input id="f_productionDate" type="date" />
+          </label>
+          <label>
+            <span class="label-text">保质期（天）</span>
+            <input id="f_shelfLifeDays" type="number" min="0" placeholder="如：牛奶 180" />
+          </label>
+        </div>
+        <p class="hint" id="computedHint">填写生产日期与保质期后，过期日会自动算出并保存，你不用自己算。</p>
+
+        <label class="full" id="expiryManualField" hidden>
+          <span class="label-text">过期日期</span>
+          <input id="f_expiryDate" type="date" />
+        </label>
+
+        <label class="full">
+          <span class="label-text">临期提醒天数 <small>（不填默认 7 天）</small></span>
+          <input id="f_expiringSoonDays" type="number" min="0" placeholder="如：牛奶设 5 天、面包设 3 天" />
+        </label>
+
+        <label class="full">
+          <span class="label-text">低库存提醒阈值 <small>（默认 3）</small></span>
+          <input id="f_lowStockThreshold" type="number" min="0" placeholder="如：3" value="3" />
+        </label>
+
+        <label class="full">
+          <span class="label-text">批次标签</span>
+          <input id="f_batchLabel" type="text" placeholder="如：旧批、新批，用来区分同物品不同批次" />
+        </label>
+
+        <label class="full">
+          <span class="label-text">备注</span>
+          <textarea id="f_note" rows="2" placeholder="如：买一送一，开封后放冰箱"></textarea>
+        </label>
+
+        <label class="full">
+          <span class="label-text">物品照片</span>
+          <div class="photo-field">
+            <input id="f_photo" type="file" accept="image/*" capture="environment" hidden />
+            <button type="button" id="photoPickBtn" class="btn ghost photo-pick">📷 选择照片</button>
+            <div id="photoPreview" class="photo-preview" hidden>
+              <img id="photoImg" alt="物品照片预览" />
+              <button type="button" id="photoRemoveBtn" class="photo-remove">✕ 移除</button>
+            </div>
+          </div>
+        </label>
+
+        <div class="form-actions">
+          <button type="button" id="deleteBtn" class="btn danger" hidden>删除</button>
+          <span class="spacer"></span>
+          <button type="button" id="cancelBtn" class="btn ghost">取消</button>
+          <button type="submit" class="btn primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- A. 照片全屏预览 -->
+  <div id="lightbox" class="lightbox" hidden>
+    <button id="lightboxClose" class="lightbox-close" aria-label="关闭">✕</button>
+    <img id="lightboxImg" alt="物品照片大图" />
+  </div>
+
+  <!-- B. 切换账号菜单 -->
+  <div id="userMenu" class="user-menu" hidden>
+    <div class="user-menu-head">切换账号</div>
+    <div id="userMenuList" class="user-menu-list"></div>
+    <button id="userMenuLogout" class="user-menu-item logout">退出登录</button>
+  </div>
+
+  <!-- C1. 用掉数量弹窗 -->
+  <div id="consumeModal" class="mini-modal" hidden>
+    <div class="mini-modal-card">
+      <h3>本次用掉几个？</h3>
+      <input id="consumeQty" type="number" min="1" step="1" value="1" />
+      <div class="mini-modal-actions">
+        <button id="consumeCancel" class="btn ghost">取消</button>
+        <button id="consumeOk" class="btn primary">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- C2. 待补货清单 -->
+  <div id="restockModal" class="mini-modal" hidden>
+    <div class="mini-modal-card">
+      <div class="mini-modal-head">
+        <h3>🛒 待补货清单</h3>
+        <button id="restockClose" class="icon-btn" aria-label="关闭">✕</button>
+      </div>
+      <ul id="restockList" class="restock-list"></ul>
+      <div class="mini-modal-actions">
+        <button id="restockCopy" class="btn ghost">复制清单</button>
+        <button id="restockClose2" class="btn primary">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- C3. 数据导出/导入 -->
+  <div id="dataModal" class="mini-modal" hidden>
+    <div class="mini-modal-card">
+      <div class="mini-modal-head">
+        <h3>⚙ 数据备份与恢复</h3>
+        <button id="dataClose" class="icon-btn" aria-label="关闭">✕</button>
+      </div>
+      <p class="hint">导出会把本机全部物品和账号备份成一个 JSON 文件；导入可恢复到本机（换机 / 重装不丢数据）。</p>
+      <div class="mini-modal-actions col">
+        <button id="exportBtn" class="btn primary">⬇ 导出备份(JSON)</button>
+        <button id="exportExcelBtn" class="btn ghost">📄 导出 Excel(CSV)</button>
+        <button id="importBtn" class="btn ghost">⬆ 导入备份</button>
+        <input id="importFile" type="file" accept="application/json" hidden />
+      </div>
+    </div>
+  </div>
+
+  <!-- D. 回收站 -->
+  <div id="trashModal" class="mini-modal" hidden>
+    <div class="mini-modal-card wide">
+      <div class="mini-modal-head">
+        <h3>🗑 回收站</h3>
+        <button id="trashClose" class="icon-btn" aria-label="关闭">✕</button>
+      </div>
+      <p class="hint">删除的物品会在这里保留 30 天，期间可恢复或彻底删除。</p>
+      <ul id="trashList" class="trash-list"></ul>
+      <div class="mini-modal-actions">
+        <button id="trashClear" class="btn danger">清空回收站</button>
+        <button id="trashClose2" class="btn primary">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- E. 消耗趋势统计 -->
+  <div id="statsModal" class="mini-modal" hidden>
+    <div class="mini-modal-card wide">
+      <div class="mini-modal-head">
+        <h3>📊 消耗趋势（近 30 天）</h3>
+        <button id="statsClose" class="icon-btn" aria-label="关闭">✕</button>
+      </div>
+      <div id="statsChart" class="stats-chart"></div>
+      <p id="statsSummary" class="hint"></p>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
