@@ -14,11 +14,5 @@ services:
       - key: OWNER_USER
         value: "admin"
       # OWNER_PASS 不写在这里（用默认值 admin123）；部署后在 Render 控制台改强密码更安全
-      - key: DB_DIR
-        value: "/data"
-    # 持久盘：免费层可能不支持；不支持时数据在「重新部署」后会被清空。
-    # 用应用内「⚙ → 导出备份」随时存档兜底。要永久不丢可升级付费档或换 Railway。
-    disks:
-      - name: inv-data
-        mountPath: "/data"
-        sizeGB: 1
+      # 免费层不支持持久盘（disks），数据存临时文件系统，重新部署/休眠重启后清空；
+      # 用应用内「⚙ → 导出备份」随时存档兜底。要永久不丢可升级付费档或换 Railway。
